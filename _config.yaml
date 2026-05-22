@@ -6,3 +6,4 @@ author: "TheFPill"
 show_excerpts: true
 markdown: kramdown
 permalink: /:title/
+future: true
