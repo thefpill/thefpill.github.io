@@ -1,0 +1,8 @@
+title: "The FpillB-log"
+description: "Notes from the underground — offensive security, reverse engineering, and exploit development."
+baseurl: ""          # leave empty for user/org pages
+url: "https://thefpill.github.io"
+author: "TheFPill"
+show_excerpts: true
+markdown: kramdown
+permalink: /:title/

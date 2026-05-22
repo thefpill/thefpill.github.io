@@ -1,0 +1,15 @@
+---
+layout: default
+title: Home
+---
+<div class="posts">
+  {% for post in site.posts %}
+  <article class="post-preview">
+    <h2><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h2>
+    <div class="post-date">[ {{ post.date | date: "%Y-%m-%d %H:%M" }} ]</div>
+    {% if site.show_excerpts %}
+      <p>{{ post.excerpt | strip_html | truncatewords: 50 }}</p>
+    {% endif %}
+  </article>
+  {% endfor %}
+</div>
