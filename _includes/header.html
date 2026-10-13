@@ -1,6 +1,14 @@
 <header class="site-header">
   <div class="terminal-line">
-    <span class="prompt">user@darkstar:~$</span> <span class="cmd">cat /etc/motd</span>
+    <span class="prompt">user@darkstar:~$</span> <span class="cmd">
+{% if page.url == "/" %}
+ls /var/log/fpillb
+{% elsif page.layout == "post" %}
+cat {{ page.path }}
+{% else %}
+ls /var/log/fpillb/
+{% endif %}
+</span>
   </div>
   <h1 class="site-title">{{ site.title }}</h1>
   <p class="site-description">{{ site.description }}</p>
