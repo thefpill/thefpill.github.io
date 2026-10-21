@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Start of my journey with Go lang in C-world"
-date: 2026-10-13 11:30
+date: 2026-10-21 11:30
 tags: [Golang, Windows Internals ,Detection Engineering , DFIR,  MemoryForensics, Win32API, ThreatHunting]
 ---
 
