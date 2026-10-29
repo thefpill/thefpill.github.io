@@ -1,0 +1,80 @@
+---
+layout: post
+title: "NT HEAP"
+date: 2026-10-30 08:00
+tags: [Golang, Windows Internals, MemoryForensics, Win32API, NT HEAP]
+---
+**Never back down! Never what ?!**
+
+### Intro 
+
+That was what I had to chant when tackling this section of the project - and I barely started. Heap management was proving more difficult then I hoped - multiple heaps, `double linked lists` for `segment` navigation, `heap entries` per segment - and `uncommitted ranges` ,`VAIL` <- Virtual Allocation entries,  `decoding` the heap entries and I am not even talking about whole other "mode" of operation  -> `segment heap`
+
+In this post we are going to tackle only the classic NT HEAP  with basic `_HEAP_ENTRY` walk . 
+The structure, the structure and again the structure ...  Before we can take even a single step we have to familiarize ourselves with the internal structure of `_HEAP` 
+
+At first I was relying solely on [VERGILIUS](https://www.vergiliusproject.com/) Project that documents the internal structures across time and architectures .  
+
+Bellow is a very  ( and i repeat a very simplistic depiction of `HEAP` structure )
+
+```
+    _HEAP                                       
+┌────────────────────────────────────────┐      
+│ ┌────────────────────────────────────┐ │      
+│ │      _HEAP_SEGMENT                 │ │      
+│ │         ┌─────────────────────────┐│ │      
+│ │    0x0  │ _HEAP_ENTRY             ││ │      
+│ │         │ 0x18    SegmentListEntry││ │      
+│ │         │ 0x40    FirstEntry      │◄─┼─────┐
+│ │         │ 0x48    LastValidEntry  ││ │     │
+│ │         │                         ││ │     │
+│ │         └─────────────────────────┘│ │     │
+│ └────────────────────────────────────┘ │     │
+│                                        │     │
+│                                        │     │
+│  0x80 _HEAP_ENTRY Encoding             │     │
+│                                        │     │
+│  0x110            VirtualAllocdBlocks  │     │
+│  0x120            SegmentList    ──────┼─────┘
+│                                        │      
+│                                        │      
+│                                        │         
+│                                        │      
+│                                        │      
+└────────────────────────────────────────┘      
+```
+
+
+### Talking the talk
+
+I mentioned in my previous post that `Heap32First/Next` wont be sufficient. Microsoft them selves state that : *Walking the heap with **Heap32First** and **Heap32Next** is inefficient, particularly for large heaps. Use [HeapWalk](https://learn.microsoft.com/en-us/windows/desktop/api/heapapi/nf-heapapi-heapwalk) instead.* 
+
+The `HeapWalk` is only for a calling process so thats a no go. The Heap32First/Next is what I implemented anyway. From what I read ( and in some sense experienced my self ) the difference between the manual walk and `ToolHelp` approach  boils down to evidence depth and suitability. 
+While toolHelp approach is good for debugging lets say it often quoted as *surface-level inventory* .
+
+Manually walking the `_HEAP_ENTRIES` lends us into territory of [structured heap forensics](https://webdiis.unizar.es/~ricardo/files/slides/academic/slides-DFRWS-EU-26.pdf#1#1#1) which points out that the traditional flat memory view ( signature based carving etc..) lacks the structural context needed for `Heap spraying` attacks `Use-after-free` exploits and `Heap Feng shui` manipulation . Which all sounds nice and fancy but lets actually  take a look and ( try to ) walk the heap manually 
+### Walking the walk
+
+Couple of things before we take our first step. This is not a comprehensive HEAP entry walk - not even close -  for now I am walking the Back-End  NT HEAP - i am completely skipping `LFH` buckets , I have not implemented newer `Segment Heap` and `VirtualAllocdBlocks` 
+
+In future I hope I get to cover those topics too but for now we can demystify the elementary `_HEAP_ENTRY` walk. 
+
+The pain point in this is that all of the documentation is - lets say verry volatile. Its not very well documented in the first place and what is documented changes over time a build releases so things break.  For my research I workd with latest win 10 so these are the offsets ( [22H2 (2022 Update, Vibranium R5)](https://www.vergiliusproject.com/kernels/x64/windows-10/22h2))  I was working with.
+
+The basic logic of walking and decoding `_HEAP_ENTRY` is to get all `_HEAP`s pointers from `PEB.ProcessHeaps` (heap address + 0xf0) for each HEAP pointer get all segments by walking the  heap segment double linked list   form list head `flink`  that points to first segment of the heap which is embedded as segment entry at the start of the heap. 
+
+So basically the `SegmentList` -> `flink` points to `LIST_ENTRY` of the first segment - which happens to be the `base of the heap` + `0x18` . We can continue this loop following the `flink` of  each subsequent `HEAP_SEGMENT` after which we have to  subtract the `0x18` from the address to get to the root of the entry so we can map the struct cleanly. 
+
+One things that took me longer than it should have was definitely the termination of the loop - How do i know that i am at the start of the loop ? I could have just store the visited addresses and check each time I followed the `flink` but I decided that following the logic that was intended would be "more" fun ... well spoiler alert it was not I got stuck on figuring out what the `list head`  was . From what I read it should have been the `SegmentList` entry in `HEAP`   which is `LIST_ENTRY` so I thought that the first `flink` would be also the last. Well it was not and to spare you the hassle its the `SegmentList` itself - so address to terminate the loop would be `HEAP` base + `0x120` 
+
+So we have the `HEAP`s the `HEAP_SEGMENT`s  only thing left if is to collect the `HEAP_ENTRY`/ies . But as this post is running little longer then I would like we will tackle this in the next one! Take care and stay curious !
+### Articles : 
+```
+https://www.vergiliusproject.com/kernels/x64/windows-10/22h2/_HEAP
+
+https://github.com/pwnfuzz/windows-heap-exploitation/blob/main/internals/nt_heap.md
+
+https://blackhat.com/presentations/bh-usa-09/MCDONALD/BHUSA09-McDonald-WindowsHeap-PAPER.pdf
+
+https://illmatics.com/Understanding_the_LFH.pdf
+```
