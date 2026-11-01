@@ -8,7 +8,7 @@ tags: [Golang, Windows Internals, MemoryForensics, Win32API, NT HEAP]
 
 ### Intro 
 
-That was what I had to chant when tackling this section of the project - and I barely started. Heap management was proving more difficult then I hoped - multiple heaps, `double linked lists` for `segment` navigation, `heap entries` per segment - and `uncommitted ranges` ,`VAIL` <- Virtual Allocation entries,  `decoding` the heap entries and I am not even talking about whole other "mode" of operation  -> `segment heap`
+That was what I had to chant when tackling this section of the project - and I barely started. Heap management was proving more difficult then I hoped - multiple heaps, `double linked lists` for `segment` navigation, `heap entries` per segment - and `uncommitted ranges` ,`VAIL` <- Virtual Allocation entries,  `decoding` the heap entries and I am not even talking about whole other "mode" of operation -> `segment heap`
 
 In this post we are going to tackle only the classic NT HEAP  with basic `_HEAP_ENTRY` walk . 
 The structure, the structure and again the structure ...  Before we can take even a single step we have to familiarize ourselves with the internal structure of `_HEAP` 
