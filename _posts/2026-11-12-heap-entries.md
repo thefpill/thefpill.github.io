@@ -192,7 +192,7 @@ if expected = uint16(heapEntryDecoded.SmallTagIndex()){
 }
 ```
 
-The whole point of the checking if the decoding was successful is to make sure we got the right `size` of the entire `HEAP_ENTRY` block  since to advance beyond the `FirstEntry` we take the decoded `size` of the entry and add it to the current entry address -> then move the pointer to that address and cast the raw `0x10` bytes memory as the `HEAP_ENTRY`  decode it  and move to the next entry until we either reach `LastValidEntry` or get to `UCR`(Uncommitted range)  -  if its just a gap we can jump over - or if its the end we can terminate 
+The whole point of the checking if the decoding was successful is to make sure we got the right `size` of the entire `HEAP_ENTRY` block  since to advance beyond the `FirstEntry` we take the decoded `size` multiply it with the granularity ( 16 bytes for 64 bit or 8 bytes for 32 bit ) which gives us the `real size` of the entry and then we add it to the current entry address -> then move the pointer to that address and cast the raw `0x10` bytes memory as the `HEAP_ENTRY`  decode it  and move to the next entry until we either reach `LastValidEntry` or get to `UCR`(Uncommitted range)  -  if its just a gap we can jump over - or if its the end we can terminate 
 
 The checksum should in **theory** catch if we diverge .. so we don't cast random raw memory as `HEAP_ENTRY` and pretend its a valid block.
 
