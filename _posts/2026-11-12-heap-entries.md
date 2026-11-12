@@ -1,9 +1,3 @@
----
-layout: post
-title: "HEAP ENTRY"
-date: 2026-11-12 09:00
-tags: [Golang, Windows Internals, MemoryForensics, Win32API, NT HEAP]
----
 Welcome back ! Lets get right back where we last left off  -> the decoding of `_HEAP_ENTRY`/ies themselves.  
 
 ```
@@ -71,11 +65,8 @@ So that sent me down a small rabbit hole  if the `sizeof(_HEAP)` is `0x2c0` and 
     .
     .
     [+0x160] LockVariable     : 0x1342a4c02c0 [Type: _HEAP_LOCK *]
-    [+0x168] CommitRoutine    : 0xe506ed50d8fa0486 : 0xe506ed50d8fa0486 [Type: long (__cdecl*)(void *,void * *,unsigned __int64 *)]
-    [+0x170] StackTraceInitVar [Type: _RTL_RUN_ONCE]
-    .
-    .
-    .
+	.
+	.
     .
     [+0x2b0] TuningParameters [Type: _HEAP_TUNING_PARAMETERS]
 0:025> dx -r1 ((ntdll!_HEAP_LOCK *)0x1342a4c02c0)
@@ -84,11 +75,11 @@ So that sent me down a small rabbit hole  if the `sizeof(_HEAP)` is `0x2c0` and 
 
 ```
 
-When we take a look at the members of  the original `_HEAP`  struct we can see that some of them. For example ->
+When we take a look at the members of  the original `_HEAP`  struct we can see  some of them. For example :
 
-`LockVariable` at `0x1342a4c02c0` ( which is right after the `base` +`0x2c0` ) - that has underlying structure of `_HEAP_LOCK` - main functionality is thread synchronization to prevent memory corruption during concurrent heap operations
+`LockVariable`  `+0x160` points to `0x1342a4c02c0` ( which is right after the `base` +`0x2c0` ) - that has underlying structure of `_HEAP_LOCK` - main functionality is thread synchronization to prevent memory corruption during concurrent heap operations
 
-`BlocksIndex` which lives at `0x1342a4c02e8` which Microsoft doesnt specify underlying structure but both [Understanding the Low Fragmentation Heap](https://illmatics.com/Understanding_the_LFH_Slides.pdf#:~:text=%E2%80%A2%20Chunk%20%3D%20contiguous%20piece%20of%20memory,%3D%20_HEAP_BUCKET%20structure%20used%20as%20size%2Foffset%20reference.) and [Windows Heap Internals learning](https://rolemee.com/posts/windows%E5%A0%86%E5%AD%A6%E4%B9%A0/)  point out that the structure is `_HEAP_LIST_LOOKUP` which we can see for ourselves if we cast the raw address to pointer type of `ntdll!_HEAP_LIST_LOOKUP*` 
+`BlocksIndex`  which lives at `0x1342a4c02e8` -> Microsoft doesnt specify underlying structure but both [Understanding the Low Fragmentation Heap](https://illmatics.com/Understanding_the_LFH_Slides.pdf#:~:text=%E2%80%A2%20Chunk%20%3D%20contiguous%20piece%20of%20memory,%3D%20_HEAP_BUCKET%20structure%20used%20as%20size%2Foffset%20reference.) and [Windows Heap Internals learning](https://rolemee.com/posts/windows%E5%A0%86%E5%AD%A6%E4%B9%A0/)  point out that the structure is `_HEAP_LIST_LOOKUP` which we can see for ourselves if we cast the raw address to pointer type of `ntdll!_HEAP_LIST_LOOKUP*` 
 
 ```
 dx (ntdll!_HEAP_LIST_LOOKUP*)0x1342a4c02e8
@@ -104,7 +95,7 @@ dx (ntdll!_HEAP_LIST_LOOKUP*)0x1342a4c02e8
     [+0x030] ListHints        : 0x1342a4c0330 [Type: _LIST_ENTRY * *]
 ```
 
-But this was not the point of this article - so lets get back to the decoding of the regular `HEAP_ENTRY`s as promised. 
+But lets keep going as this was not the point of this article - so lets get back to the decoding of the regular `HEAP_ENTRY`/ies as promised. 
 
 ### Decoding 
 
